@@ -19,8 +19,18 @@ import Navbar from 'components/Navbar';
 import theme, { globals } from 'styles/theme';
 import { MarketsBasicProvider } from 'contexts/MarketsBasicContext';
 import { NetworkContextProvider, useNetworkContext } from 'contexts/NetworkContext';
+import { ArcxAnalyticsProvider } from '@arcxmoney/analytics';
 
 const { maxWidth } = globals;
+const API_KEY = `process.env.ARCX_API_KEY`; //waiting for api-key
+if (!API_KEY) {
+  throw new Error('ARCX_API_KEY is not set');
+}
+const arcXConfig = {
+  trackPages: true,
+  trackChainChanges: true,
+  trackTransactions: true,
+};
 
 const Web3ModalWrapper = () => {
   const { displayNetwork } = useNetworkContext();
@@ -73,30 +83,32 @@ export default function App({ Component, pageProps }: AppProps) {
         />
         <meta name="twitter:image" content="https://app.exact.ly/img/social/ogp.png" />
       </Head>
-      <ThemeProvider>
-        <MUIThemeProvider theme={theme}>
-          <WagmiConfig client={wagmi}>
-            <NetworkContextProvider>
-              <AccountDataProvider>
-                <MarketProvider>
-                  <ModalStatusProvider>
-                    <MarketsBasicProvider>
-                      <Box display="flex" flexDirection="column" mx={2} height="100%">
-                        <Navbar />
-                        <main style={{ flexGrow: 1, maxWidth, margin: '0 auto', width: '100%' }}>
-                          <Component {...pageProps} />
-                        </main>
-                        <Footer />
-                      </Box>
-                    </MarketsBasicProvider>
-                  </ModalStatusProvider>
-                </MarketProvider>
-              </AccountDataProvider>
-              <Web3ModalWrapper />
-            </NetworkContextProvider>
-          </WagmiConfig>
-        </MUIThemeProvider>
-      </ThemeProvider>
+      <ArcxAnalyticsProvider apiKey={API_KEY} config={arcXConfig}>
+        <ThemeProvider>
+          <MUIThemeProvider theme={theme}>
+            <WagmiConfig client={wagmi}>
+              <NetworkContextProvider>
+                <AccountDataProvider>
+                  <MarketProvider>
+                    <ModalStatusProvider>
+                      <MarketsBasicProvider>
+                        <Box display="flex" flexDirection="column" mx={2} height="100%">
+                          <Navbar />
+                          <main style={{ flexGrow: 1, maxWidth, margin: '0 auto', width: '100%' }}>
+                            <Component {...pageProps} />
+                          </main>
+                          <Footer />
+                        </Box>
+                      </MarketsBasicProvider>
+                    </ModalStatusProvider>
+                  </MarketProvider>
+                </AccountDataProvider>
+                <Web3ModalWrapper />
+              </NetworkContextProvider>
+            </WagmiConfig>
+          </MUIThemeProvider>
+        </ThemeProvider>
+      </ArcxAnalyticsProvider>
     </>
   );
 }
