@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@analytics/google-analytics": "^1.0.5",
+    "@arcxmoney/analytics": "^1.8.1",
     "@emotion/react": "^11.10.6",
     "@emotion/styled": "^11.10.6",
     "@ethersproject/bignumber": "^5.7.0",
