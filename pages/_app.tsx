@@ -26,11 +26,6 @@ const API_KEY = `process.env.ARCX_API_KEY`; //waiting for api-key
 if (!API_KEY) {
   throw new Error('ARCX_API_KEY is not set');
 }
-const arcXConfig = {
-  trackPages: true,
-  trackChainChanges: true,
-  trackTransactions: true,
-};
 
 const Web3ModalWrapper = () => {
   const { displayNetwork } = useNetworkContext();
@@ -83,7 +78,7 @@ export default function App({ Component, pageProps }: AppProps) {
         />
         <meta name="twitter:image" content="https://app.exact.ly/img/social/ogp.png" />
       </Head>
-      <ArcxAnalyticsProvider apiKey={API_KEY} config={arcXConfig}>
+      <ArcxAnalyticsProvider apiKey={API_KEY}>
         <ThemeProvider>
           <MUIThemeProvider theme={theme}>
             <WagmiConfig client={wagmi}>
