@@ -38,6 +38,7 @@
     "@web3modal/react": "^2.1.1",
     "add-to-calendar-button": "^2.1.2",
     "analytics": "^0.8.1",
+    "arena-tools": "^1.0.1",
     "blockies-ts": "^1.0.0",
     "dayjs": "^1.11.7",
     "graphql": "^16.6.0",
