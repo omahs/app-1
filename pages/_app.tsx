@@ -20,8 +20,13 @@ import Navbar from 'components/Navbar';
 import { globals } from 'styles/theme';
 import { MarketsBasicProvider } from 'contexts/MarketsBasicContext';
 import { NetworkContextProvider, useNetworkContext } from 'contexts/NetworkContext';
+import ReactGA from 'react-ga4';
 
 const { maxWidth } = globals;
+
+// const { NEXT_PUBLIC_GA_ID } = process.env;
+const NEXT_PUBLIC_GA_ID = 'G-MMNVXFFJJF';
+if (NEXT_PUBLIC_GA_ID) void ReactGA.initialize(NEXT_PUBLIC_GA_ID, { gtagOptions: { anonymizeIp: true } });
 
 const Web3ModalWrapper = () => {
   const { palette } = useTheme();

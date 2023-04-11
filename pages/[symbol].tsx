@@ -12,6 +12,7 @@ import Link from 'next/link';
 import useAnalytics from 'hooks/useAnalytics';
 import useRouter from 'hooks/useRouter';
 import { useTranslation } from 'react-i18next';
+import ReactGA from 'react-ga4';
 
 type Props = {
   symbol: string;
@@ -22,7 +23,16 @@ const Market: NextPage<Props> = ({ symbol }: Props) => {
   const { query } = useRouter();
   const { page } = useAnalytics();
   useEffect(() => void page(), [page]);
-
+  useEffect(
+    () =>
+      void ReactGA.send({
+        hitType: 'pageview',
+        page: `/asset/${symbol}`,
+        title: 'Asset Page',
+        location: `/asset/${symbol}`,
+      }),
+    [symbol],
+  );
   return (
     <Grid container mt={-1}>
       <Box sx={{ display: 'flex', gap: 0.5 }} mb={1}>
