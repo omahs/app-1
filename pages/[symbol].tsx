@@ -20,19 +20,19 @@ type Props = {
 
 const Market: NextPage<Props> = ({ symbol }: Props) => {
   const { t } = useTranslation();
-  const { query } = useRouter();
+  const { query, pathname } = useRouter();
   const { page } = useAnalytics();
   useEffect(() => void page(), [page]);
-  useEffect(
-    () =>
-      void ReactGA.send({
-        hitType: 'pageview',
-        page: `/asset/${symbol}`,
-        title: 'Asset Page',
-        location: `/asset/${symbol}`,
-      }),
-    [symbol],
-  );
+
+  useEffect(() => {
+    void ReactGA.send({
+      hitType: 'pageview',
+      page: pathname,
+      title: `${symbol} Asset Page`,
+      location: `/${symbol}`,
+    });
+  }, [pathname, symbol]);
+
   return (
     <Grid container mt={-1}>
       <Box sx={{ display: 'flex', gap: 0.5 }} mb={1}>
