@@ -1,6 +1,7 @@
 import React, { createContext, FC, PropsWithChildren, useCallback, useContext, useEffect, useState } from 'react';
 import { ThemeProvider as MUIThemeProvider } from '@mui/material/styles';
 import { lightTheme, darkTheme } from 'styles/theme';
+import ReactGA from 'react-ga4';
 
 type ContextValues = {
   theme: 'light' | 'dark';
@@ -16,6 +17,10 @@ const ThemeContext = createContext(defaultValues);
 
 export const ThemeProvider: FC<PropsWithChildren> = ({ children }) => {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  useEffect(() => {
+    void ReactGA.set({ theme: theme });
+  }, [theme]);
 
   useEffect(() => {
     const storageThemeRaw = window?.localStorage?.getItem('theme');

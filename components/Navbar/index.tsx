@@ -22,6 +22,8 @@ import SelectDisplayNetwork from 'components/SelectDisplayNetwork';
 import useAnalytics from 'hooks/useAnalytics';
 import { useTranslation } from 'react-i18next';
 import MaturityDateReminder from 'components/MaturityDateReminder';
+import ReactGA from 'react-ga4';
+
 const { onlyMobile, onlyDesktopFlex } = globals;
 
 function Navbar() {
@@ -52,6 +54,7 @@ function Navbar() {
       testnet: chain?.testnet,
     });
     void identify(walletAddress);
+    void ReactGA.set({ userId: walletAddress });
   }, [walletAddress, connector, chain, identify, blockNumber]);
 
   const handleFaucetClick = useCallback(() => {

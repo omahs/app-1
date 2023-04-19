@@ -1,8 +1,8 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Typography, SxProps } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 import PublicIcon from '@mui/icons-material/Public';
-
+import ReactGA from 'react-ga4';
 import { useTranslation } from 'react-i18next';
 
 import i18n from 'i18n';
@@ -27,6 +27,10 @@ function SelectLanguage() {
     i18n.changeLanguage(option);
     setLng(option);
   }, []);
+
+  useEffect(() => {
+    void ReactGA.set({ UI_language: lng });
+  }, [lng]);
 
   const languages = useMemo(() => Object.keys(i18n.services.resourceStore.data), []);
 

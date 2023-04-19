@@ -10,6 +10,7 @@ import React, {
 } from 'react';
 import useAccountData from 'hooks/useAccountData';
 import { useWeb3 } from 'hooks/useWeb3';
+import ReactGA from 'react-ga4';
 
 type ContextValues = {
   marketSymbol: string;
@@ -56,6 +57,9 @@ export const MarketProvider: FC<PropsWithChildren> = ({ children }) => {
     },
     [setView],
   );
+  useEffect(() => {
+    void ReactGA.set({ view_mode: view });
+  }, [view]);
 
   return (
     <MarketContext.Provider

@@ -8,6 +8,7 @@ import useRouter from 'hooks/useRouter';
 import { supportedChains, defaultChain, wagmi } from 'utils/client';
 import usePreviousValue from 'hooks/usePreviousValue';
 import { getQueryParam } from 'utils/getQueryParam';
+import ReactGA from 'react-ga4';
 
 function isSupported(id?: number): boolean {
   return Boolean(id && supportedChains.find((c) => c.id === id));
@@ -35,6 +36,10 @@ export const NetworkContextProvider: FC<PropsWithChildren> = ({ children }) => {
     return defaultChain ?? wagmiChains.mainnet;
   });
   const previousChain = usePreviousValue(chain);
+
+  useEffect(() => {
+    void ReactGA.set({ displayed_network: displayNetwork.name });
+  }, [displayNetwork]);
 
   useEffect(() => {
     if (!wagmi.data || !wagmi.data.chain || !(connector && connector.id === 'safe')) return;
