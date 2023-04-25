@@ -38,10 +38,6 @@ export const NetworkContextProvider: FC<PropsWithChildren> = ({ children }) => {
   const previousChain = usePreviousValue(chain);
 
   useEffect(() => {
-    void ReactGA.set({ displayed_network: displayNetwork.name });
-  }, [displayNetwork]);
-
-  useEffect(() => {
     if (!wagmi.data || !wagmi.data.chain || !(connector && connector.id === 'safe')) return;
     const safeChainID = wagmi.data.chain.id;
     if (isSupported(safeChainID)) {
@@ -51,6 +47,8 @@ export const NetworkContextProvider: FC<PropsWithChildren> = ({ children }) => {
   }, [connector]);
 
   useEffect(() => {
+    void ReactGA.set({ displayed_network: displayNetwork.name });
+
     if (first.current) {
       first.current = false;
       return;

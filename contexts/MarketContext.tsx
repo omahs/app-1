@@ -59,7 +59,7 @@ export const MarketProvider: FC<PropsWithChildren> = ({ children }) => {
   );
   useEffect(() => {
     void ReactGA.set({ view_mode: view });
-  }, [view]);
+  }, [setView, view]);
 
   return (
     <MarketContext.Provider
