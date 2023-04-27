@@ -1,7 +1,7 @@
 import React, { createContext, FC, PropsWithChildren, useCallback, useContext, useEffect, useState } from 'react';
 import { ThemeProvider as MUIThemeProvider } from '@mui/material/styles';
 import { lightTheme, darkTheme } from 'styles/theme';
-import ReactGA from 'react-ga4';
+import useAnalytics from 'hooks/useAnalytics';
 
 type ContextValues = {
   theme: 'light' | 'dark';
@@ -17,10 +17,15 @@ const ThemeContext = createContext(defaultValues);
 
 export const ThemeProvider: FC<PropsWithChildren> = ({ children }) => {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const { setData } = useAnalytics();
 
-  useEffect(() => {
-    void ReactGA.set({ theme: theme });
-  }, [theme]);
+  const updateTheme = useCallback(
+    (newTheme: 'light' | 'dark') => {
+      setTheme(newTheme);
+      void setData({ theme: newTheme });
+    },
+    [setData],
+  );
 
   useEffect(() => {
     const storageThemeRaw = window?.localStorage?.getItem('theme');
@@ -29,22 +34,22 @@ export const ThemeProvider: FC<PropsWithChildren> = ({ children }) => {
 
       if (storageTheme && (storageTheme === 'light' || storageTheme === 'dark')) {
         document.body.dataset.theme = storageTheme;
-        setTheme(storageTheme);
+        updateTheme(storageTheme);
       }
     } else {
       const colorScheme = window?.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      setTheme(colorScheme);
+      updateTheme(colorScheme);
       if (window?.localStorage) {
         window.localStorage.setItem('theme', JSON.stringify(colorScheme));
       }
     }
-  }, []);
+  }, [updateTheme]);
 
   const changeTheme = useCallback(() => {
     const target = theme === 'light' ? 'dark' : 'light';
-    setTheme(target);
-    localStorage.setItem('theme', JSON.stringify(target));
-  }, [theme]);
+    updateTheme(target);
+    sessionStorage.setItem('theme', JSON.stringify(target));
+  }, [theme, updateTheme]);
 
   useEffect(() => {
     if (document?.body?.dataset?.theme && document?.body?.dataset?.theme !== theme) {

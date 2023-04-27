@@ -20,7 +20,7 @@ const SelectDisplayNetwork: FC = () => {
   const { setMarketSymbol } = useMarketContext();
   const { pathname, push, query } = useRouter();
   const { chains, chain } = useWeb3();
-  const { setDisplayNetwork } = useNetworkContext();
+  const { updateDisplayNetwork } = useNetworkContext();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const openMenu = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => setAnchorEl(event.currentTarget),
@@ -45,14 +45,14 @@ const SelectDisplayNetwork: FC = () => {
           },
         }).then(() => {
           resetAccountData();
-          setDisplayNetwork(displayChain);
+          updateDisplayNetwork(displayChain);
         });
       }
 
       resetAccountData();
-      setDisplayNetwork(displayChain);
+      updateDisplayNetwork(displayChain);
     },
-    [closeMenu, chain.id, setMarketSymbol, pathname, resetAccountData, setDisplayNetwork, push, query],
+    [closeMenu, chain.id, setMarketSymbol, pathname, resetAccountData, updateDisplayNetwork, push, query],
   );
 
   const { buttonBgColor, image } = useMemo(() => {

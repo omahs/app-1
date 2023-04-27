@@ -1,14 +1,13 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import type { FC, PropsWithChildren } from 'react';
 import { Chain, useNetwork, useAccount } from 'wagmi';
 import * as wagmiChains from 'wagmi/chains';
 import Router from 'next/router';
 import useRouter from 'hooks/useRouter';
-
+import useAnalytics from 'hooks/useAnalytics';
 import { supportedChains, defaultChain, wagmi } from 'utils/client';
 import usePreviousValue from 'hooks/usePreviousValue';
 import { getQueryParam } from 'utils/getQueryParam';
-import ReactGA from 'react-ga4';
 
 function isSupported(id?: number): boolean {
   return Boolean(id && supportedChains.find((c) => c.id === id));
@@ -16,7 +15,7 @@ function isSupported(id?: number): boolean {
 
 type ContextValues = {
   displayNetwork: Chain;
-  setDisplayNetwork: (c: Chain) => void;
+  updateDisplayNetwork: (c: Chain) => void;
 };
 
 const NetworkContext = createContext<ContextValues | null>(null);
@@ -24,40 +23,50 @@ const NetworkContext = createContext<ContextValues | null>(null);
 export const NetworkContextProvider: FC<PropsWithChildren> = ({ children }) => {
   const { pathname, isReady } = useRouter();
   const { connector } = useAccount();
+  const { setData } = useAnalytics();
   const { chain } = useNetwork();
   const first = useRef(true);
   const [displayNetwork, setDisplayNetwork] = useState<Chain>(() => {
     const n = getQueryParam('n');
     const queryChain = typeof n === 'string' ? wagmiChains[n as keyof typeof wagmiChains] : undefined;
     if (isSupported(queryChain?.id) && queryChain) {
+      void setData({ displayed_network: queryChain.network });
       return queryChain;
     }
 
-    return defaultChain ?? wagmiChains.mainnet;
+    const defChain = defaultChain ?? wagmiChains.mainnet;
+    void setData({ displayed_network: defChain.network });
+    return defChain;
   });
   const previousChain = usePreviousValue(chain);
+
+  const updateDisplayNetwork = useCallback(
+    (c: Chain) => {
+      setDisplayNetwork(c);
+      void setData({ displayed_network: c.network });
+    },
+    [setData],
+  );
 
   useEffect(() => {
     if (!wagmi.data || !wagmi.data.chain || !(connector && connector.id === 'safe')) return;
     const safeChainID = wagmi.data.chain.id;
     if (isSupported(safeChainID)) {
       const safeChain = supportedChains.find((c) => c.id === safeChainID);
-      setDisplayNetwork(safeChain as Chain);
+      updateDisplayNetwork(safeChain as Chain);
     }
-  }, [connector]);
+  }, [connector, updateDisplayNetwork]);
 
   useEffect(() => {
-    void ReactGA.set({ displayed_network: displayNetwork.name });
-
     if (first.current) {
       first.current = false;
       return;
     }
 
     if (previousChain && chain && isSupported(chain.id) && previousChain.id !== chain.id) {
-      return setDisplayNetwork(chain);
+      return updateDisplayNetwork(chain);
     }
-  }, [previousChain, chain, displayNetwork]);
+  }, [previousChain, chain, displayNetwork, updateDisplayNetwork]);
 
   useEffect(() => {
     if (first.current || !isReady) {
@@ -70,7 +79,7 @@ export const NetworkContextProvider: FC<PropsWithChildren> = ({ children }) => {
 
   const value: ContextValues = {
     displayNetwork,
-    setDisplayNetwork,
+    updateDisplayNetwork,
   };
 
   return <NetworkContext.Provider value={value}>{first.current ? null : children}</NetworkContext.Provider>;

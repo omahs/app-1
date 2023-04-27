@@ -1,6 +1,6 @@
 import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 import { setContext, setUser } from '@sentry/nextjs';
-import { goerli, useBlockNumber, useClient } from 'wagmi';
+import { goerli, useAccount, useBlockNumber, useClient } from 'wagmi';
 import DisclaimerModal from 'components/DisclaimerModal';
 import Image from 'next/image';
 import useRouter from 'hooks/useRouter';
@@ -27,12 +27,12 @@ const { onlyMobile, onlyDesktopFlex } = globals;
 
 function Navbar() {
   const { t } = useTranslation();
-  const { identify } = useAnalytics();
+  const { setData, unsetData } = useAnalytics();
   const { connector } = useClient();
   const { walletAddress } = useWeb3();
   const { pathname: currentPathname, query } = useRouter();
-  const { chain, isConnected } = useWeb3();
-
+  const { chain, isConnected, impersonateActive } = useWeb3();
+  const { address } = useAccount();
   const { palette } = useTheme();
   const { view } = useMarketContext();
   const { openOperationModal } = useModalStatus();
@@ -52,8 +52,11 @@ function Navbar() {
       blockNumber,
       testnet: chain?.testnet,
     });
-    void identify(walletAddress);
-  }, [walletAddress, connector, chain, identify, blockNumber]);
+
+    void setData({ user_id: address });
+
+    impersonateActive ? void setData({ impersonate_address: walletAddress }) : void unsetData('impersonate_address');
+  }, [walletAddress, connector, chain, blockNumber, impersonateActive, setData, address, unsetData]);
 
   const handleFaucetClick = useCallback(() => {
     if (chain?.id === goerli.id) return openOperationModal('faucet');

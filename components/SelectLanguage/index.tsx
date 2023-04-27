@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Typography, SxProps } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 import PublicIcon from '@mui/icons-material/Public';
-import ReactGA from 'react-ga4';
 import { useTranslation } from 'react-i18next';
+import useAnalytics from 'hooks/useAnalytics';
 
 import i18n from 'i18n';
 
@@ -16,6 +16,7 @@ const sx: SxProps = {
 
 function SelectLanguage() {
   const { t } = useTranslation();
+  const { setData } = useAnalytics();
   const [lng, setLng] = useState(i18n.language.substring(0, 2));
 
   const names: Record<string, string | null> = {
@@ -29,8 +30,8 @@ function SelectLanguage() {
   }, []);
 
   useEffect(() => {
-    void ReactGA.set({ UI_language: lng });
-  }, [lng]);
+    void setData({ UI_language: lng });
+  }, [lng, setData]);
 
   const languages = useMemo(() => Object.keys(i18n.services.resourceStore.data), []);
 

@@ -10,7 +10,7 @@ import React, {
 } from 'react';
 import useAccountData from 'hooks/useAccountData';
 import { useWeb3 } from 'hooks/useWeb3';
-import ReactGA from 'react-ga4';
+import useAnalytics from 'hooks/useAnalytics';
 
 type ContextValues = {
   marketSymbol: string;
@@ -31,6 +31,7 @@ export const MarketProvider: FC<PropsWithChildren> = ({ children }) => {
   const [view, setView] = useState<MarketView>();
   const [marketSymbol, setMarketSymbol] = useState<string>('USDC');
   const { marketAccount } = useAccountData(marketSymbol);
+  const { setData } = useAnalytics();
   const [date, setDate] = useState<number>();
 
   const dates = useMemo<number[]>(
@@ -58,8 +59,8 @@ export const MarketProvider: FC<PropsWithChildren> = ({ children }) => {
     [setView],
   );
   useEffect(() => {
-    void ReactGA.set({ view_mode: view });
-  }, [setView, view]);
+    void setData({ view_mode: view });
+  }, [setData, view]);
 
   return (
     <MarketContext.Provider
