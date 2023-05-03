@@ -1,4 +1,4 @@
-import { BigNumber, parseFixed } from '@ethersproject/bignumber';
+import { BigNumber, formatFixed, parseFixed } from '@ethersproject/bignumber';
 import { WeiPerEther } from '@ethersproject/constants';
 import { useOperationContext } from 'contexts/OperationContext';
 import useAccountData from 'hooks/useAccountData';
@@ -19,7 +19,7 @@ type Deposit = {
 
 export default (): Deposit => {
   const { t } = useTranslation();
-  const { track } = useAnalytics();
+  const { analyticsEvent } = useAnalytics();
   const { walletAddress } = useWeb3();
 
   const {
@@ -128,6 +128,7 @@ export default (): Deposit => {
     let depositTx;
     try {
       setIsLoadingOp(true);
+      //add_to_cart
       if (marketAccount.assetSymbol === 'WETH') {
         if (!ETHRouterContract) return;
 
@@ -146,16 +147,25 @@ export default (): Deposit => {
         });
       }
 
+      //begin_checkout
+
       setTx({ status: 'processing', hash: depositTx.hash });
 
       const { status, transactionHash } = await depositTx.wait();
 
+      //if (status) ? 'purchase' : 'remove_from_cart'
+
       setTx({ status: status ? 'success' : 'error', hash: transactionHash });
 
-      void track(status ? 'deposit' : 'depositRevert', {
+      void analyticsEvent(status ? 'deposit' : 'deposit_revert', {
+        operation: 'deposit',
+        status: status ? 'success' : 'error',
         amount: qty,
+        tx_hash: transactionHash,
         asset: marketAccount.assetSymbol,
-        hash: transactionHash,
+        wallet_balance: walletBalance,
+        gas_limit: formatFixed(depositTx.gasLimit),
+        ...(depositTx.gasPrice ? { gas_price: formatFixed(depositTx.gasPrice) } : {}),
       });
     } catch (error) {
       if (depositTx) setTx({ status: 'error', hash: depositTx.hash });
@@ -164,16 +174,17 @@ export default (): Deposit => {
       setIsLoadingOp(false);
     }
   }, [
-    walletAddress,
-    marketContract,
+    ETHRouterContract,
+    analyticsEvent,
+    handleOperationError,
     marketAccount,
+    marketContract,
+    qty,
+    setErrorData,
     setIsLoadingOp,
     setTx,
-    track,
-    qty,
-    ETHRouterContract,
-    setErrorData,
-    handleOperationError,
+    walletAddress,
+    walletBalance,
   ]);
 
   const handleSubmitAction = useCallback(async () => {
@@ -184,13 +195,8 @@ export default (): Deposit => {
       return;
     }
 
-    void track('depositRequest', {
-      amount: qty,
-      asset: symbol,
-    });
-
     return deposit();
-  }, [isLoading, requiresApproval, track, qty, symbol, deposit, approve, setRequiresApproval, needsApproval]);
+  }, [isLoading, requiresApproval, qty, deposit, approve, setRequiresApproval, needsApproval]);
 
   return { isLoading, onMax, handleInputChange, handleSubmitAction, needsApproval, previewGasCost, deposit };
 };

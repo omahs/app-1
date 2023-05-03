@@ -30,7 +30,7 @@ import { defaultAmount, gasLimitMultiplier } from 'utils/const';
 const Withdraw: FC = () => {
   const { t } = useTranslation();
   const translateOperation = useTranslateOperation();
-  const { track } = useAnalytics();
+  const { analyticsEvent } = useAnalytics();
   const { operation } = useModalStatus();
   const { walletAddress } = useWeb3();
 
@@ -181,10 +181,14 @@ const Withdraw: FC = () => {
 
       setTx({ status: status ? 'success' : 'error', hash: transactionHash });
 
-      void track(status ? 'withdraw' : 'withdrawRevert', {
+      void analyticsEvent(status ? 'withdraw' : 'withdraw_revert', {
+        operation: 'withdraw',
+        status: status ? 'success' : 'error',
         amount: qty,
+        tx_hash: transactionHash,
         asset: marketAccount.assetSymbol,
-        hash: transactionHash,
+        gas_limit: formatFixed(withdrawTx.gasLimit),
+        ...(withdrawTx.gasPrice ? { gas_price: formatFixed(withdrawTx.gasPrice) } : {}),
       });
     } catch (error) {
       if (withdrawTx) setTx({ status: 'error', hash: withdrawTx?.hash });
@@ -198,7 +202,7 @@ const Withdraw: FC = () => {
     marketContract,
     setIsLoadingOp,
     setTx,
-    track,
+    analyticsEvent,
     qty,
     ETHRouterContract,
     isMax,
@@ -214,13 +218,8 @@ const Withdraw: FC = () => {
       return;
     }
 
-    void track('withdrawRequest', {
-      amount: qty,
-      asset: symbol,
-    });
-
     return withdraw();
-  }, [approve, isLoading, needsApproval, qty, requiresApproval, setRequiresApproval, symbol, track, withdraw]);
+  }, [approve, isLoading, needsApproval, qty, requiresApproval, setRequiresApproval, withdraw]);
 
   if (tx) return <ModalGif tx={tx} tryAgain={withdraw} />;
 

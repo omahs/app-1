@@ -14,6 +14,7 @@ import getBeforeBorrowLimit from 'utils/getBeforeBorrowLimit';
 import useHealthFactor from './useHealthFactor';
 import useAnalytics from './useAnalytics';
 import { defaultAmount, gasLimitMultiplier } from 'utils/const';
+import parseTimestamp from 'utils/parseTimestamp';
 
 type BorrowAtMaturity = {
   borrow: () => void;
@@ -27,7 +28,7 @@ type BorrowAtMaturity = {
 
 export default (): BorrowAtMaturity => {
   const { t } = useTranslation();
-  const { track } = useAnalytics();
+  const { analyticsEvent } = useAnalytics();
   const { walletAddress } = useWeb3();
 
   const {
@@ -246,11 +247,15 @@ export default (): BorrowAtMaturity => {
       const { status, transactionHash } = await borrowTx.wait();
       setTx({ status: status ? 'success' : 'error', hash: transactionHash });
 
-      void track(status ? 'borrowAtMaturity' : 'borrowAtMaturityRevert', {
+      void analyticsEvent(status ? 'borrowAtMaturity' : 'borrowAtMaturityRevert', {
+        operation: 'borrowAtMaturity',
+        status: status ? 'success' : 'error',
         amount: qty,
+        maturity: parseTimestamp(date.toString(), 'MMM DD, YYYY, HH:mm:ss'),
+        tx_hash: transactionHash,
         asset: marketAccount.assetSymbol,
-        maturity: date,
-        hash: transactionHash,
+        gas_limit: formatFixed(borrowTx.gasLimit),
+        ...(borrowTx.gasPrice ? { gas_price: formatFixed(borrowTx.gasPrice) } : {}),
       });
     } catch (error) {
       if (borrowTx?.hash) setTx({ status: 'error', hash: borrowTx.hash });
@@ -265,18 +270,18 @@ export default (): BorrowAtMaturity => {
   }, [
     setIsLoadingOp,
     fixedRate,
-    marketAccount,
     slippage,
+    marketAccount,
     date,
     qty,
     walletAddress,
     setErrorData,
+    t,
     setTx,
-    track,
+    analyticsEvent,
     ETHRouterContract,
     marketContract,
     handleOperationError,
-    t,
   ]);
 
   const updateAPR = useCallback(async () => {
@@ -314,14 +319,8 @@ export default (): BorrowAtMaturity => {
       return;
     }
 
-    void track('borrowAtMaturityRequest', {
-      amount: qty,
-      maturity: date,
-      asset: symbol,
-    });
-
     return borrow();
-  }, [isLoading, requiresApproval, track, qty, date, symbol, borrow, approve, setRequiresApproval, needsApproval]);
+  }, [isLoading, requiresApproval, qty, borrow, approve, setRequiresApproval, needsApproval]);
 
   return {
     isLoading,

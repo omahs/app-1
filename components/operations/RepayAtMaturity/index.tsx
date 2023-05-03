@@ -36,6 +36,7 @@ import usePreviewer from 'hooks/usePreviewer';
 import useDelayedEffect from 'hooks/useDelayedEffect';
 import { defaultAmount, gasLimitMultiplier } from 'utils/const';
 import { CustomError } from 'types/Error';
+import parseTimestamp from 'utils/parseTimestamp';
 
 type RepayWithDiscount = {
   principal: string;
@@ -47,7 +48,7 @@ type RepayWithDiscount = {
 const RepayAtMaturity: FC = () => {
   const { t } = useTranslation();
   const translateOperation = useTranslateOperation();
-  const { track } = useAnalytics();
+  const { analyticsEvent } = useAnalytics();
   const { operation } = useModalStatus();
   const { walletAddress } = useWeb3();
   const previewerContract = usePreviewer();
@@ -288,11 +289,16 @@ const RepayAtMaturity: FC = () => {
 
       setTx({ status: status ? 'success' : 'error', hash: transactionHash });
 
-      void track(status ? 'repayAtMaturity' : 'repayAtMaturityRevert', {
+      void analyticsEvent(status ? 'repayAtMaturity' : 'repayAtMaturityRevert', {
+        operation: 'repayAtMaturity',
+        status: status ? 'success' : 'error',
         amount: qty,
         asset: marketAccount.assetSymbol,
-        maturity: date,
-        hash: transactionHash,
+        maturity: parseTimestamp(date.toString(), 'MMM DD, YYYY, HH:mm:ss'),
+        tx_hash: transactionHash,
+        wallet_balance: walletBalance,
+        gas_limit: formatFixed(repayTx.gasLimit),
+        ...(repayTx.gasPrice ? { gas_price: formatFixed(repayTx.gasPrice) } : {}),
       });
     } catch (error) {
       if (repayTx) setTx({ status: 'error', hash: repayTx?.hash });
@@ -301,10 +307,11 @@ const RepayAtMaturity: FC = () => {
       setIsLoadingOp(false);
     }
   }, [
-    marketAccount,
     ETHRouterContract,
+    analyticsEvent,
     date,
     handleOperationError,
+    marketAccount,
     marketContract,
     maxAmountToRepay,
     positionAssetsAmount,
@@ -312,8 +319,8 @@ const RepayAtMaturity: FC = () => {
     setErrorData,
     setIsLoadingOp,
     setTx,
-    track,
     walletAddress,
+    walletBalance,
   ]);
 
   const handleSubmitAction = useCallback(async () => {
@@ -324,14 +331,8 @@ const RepayAtMaturity: FC = () => {
       return;
     }
 
-    void track('repayAtMaturityRequest', {
-      amount: qty,
-      maturity: date,
-      asset: symbol,
-    });
-
     return repay();
-  }, [approve, date, isLoading, needsApproval, qty, repay, requiresApproval, setRequiresApproval, symbol, track]);
+  }, [approve, isLoading, needsApproval, qty, repay, requiresApproval, setRequiresApproval]);
 
   if (tx) return <ModalGif tx={tx} tryAgain={repay} />;
 

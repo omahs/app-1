@@ -32,7 +32,7 @@ import { CustomError } from 'types/Error';
 function Repay() {
   const { t } = useTranslation();
   const translateOperation = useTranslateOperation();
-  const { track } = useAnalytics();
+  const { analyticsEvent } = useAnalytics();
   const { operation } = useModalStatus();
   const { walletAddress } = useWeb3();
 
@@ -159,10 +159,14 @@ function Repay() {
 
       setTx({ status: status ? 'success' : 'error', hash: transactionHash });
 
-      void track(status ? 'repay' : 'repayRevert', {
+      void analyticsEvent(status ? 'repay' : 'repay_revert', {
+        operation: 'repay',
+        status: status ? 'success' : 'error',
         amount: qty,
+        tx_hash: transactionHash,
         asset: marketAccount.assetSymbol,
-        hash: transactionHash,
+        gas_limit: formatFixed(repayTx.gasLimit),
+        ...(repayTx.gasPrice ? { gas_price: formatFixed(repayTx.gasPrice) } : {}),
       });
     } catch (error) {
       if (repayTx) setTx({ status: 'error', hash: repayTx?.hash });
@@ -171,17 +175,17 @@ function Repay() {
       setIsLoadingOp(false);
     }
   }, [
+    ETHRouterContract,
+    analyticsEvent,
+    handleOperationError,
+    isMax,
     marketAccount,
-    qty,
     marketContract,
-    walletAddress,
+    qty,
+    setErrorData,
     setIsLoadingOp,
     setTx,
-    track,
-    ETHRouterContract,
-    isMax,
-    setErrorData,
-    handleOperationError,
+    walletAddress,
   ]);
 
   const previewGasCost = useCallback(
@@ -246,13 +250,8 @@ function Repay() {
       return;
     }
 
-    void track('repayRequest', {
-      amount: qty,
-      asset: symbol,
-    });
-
     return repay();
-  }, [approve, isLoading, needsApproval, qty, repay, requiresApproval, setRequiresApproval, symbol, track]);
+  }, [approve, isLoading, needsApproval, qty, repay, requiresApproval, setRequiresApproval]);
 
   if (tx) return <ModalGif tx={tx} tryAgain={repay} />;
 

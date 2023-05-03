@@ -8,16 +8,13 @@ import MarketsBasic from 'components/markets/MarketsBasic';
 import BackgroundCircle from 'components/BackgroundCircle';
 
 import { useMarketContext } from 'contexts/MarketContext';
-import useAnalytics from 'hooks/useAnalytics';
 import ReactGA from 'react-ga4';
 import useRouter from 'hooks/useRouter';
 
 const Markets: NextPage = () => {
-  const { page } = useAnalytics();
   const { view } = useMarketContext();
   const { pathname } = useRouter();
 
-  useEffect(() => void page(), [page]);
   useEffect(
     () =>
       void ReactGA.send({

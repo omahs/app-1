@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { BigNumber, parseFixed } from '@ethersproject/bignumber';
+import { BigNumber, formatFixed, parseFixed } from '@ethersproject/bignumber';
 import { WeiPerEther, Zero } from '@ethersproject/constants';
 import { useOperationContext } from 'contexts/OperationContext';
 import useAccountData from 'hooks/useAccountData';
@@ -13,6 +13,7 @@ import { OperationHook } from 'types/OperationHook';
 import useAnalytics from './useAnalytics';
 import { defaultAmount, gasLimitMultiplier } from 'utils/const';
 import { CustomError } from 'types/Error';
+import parseTimestamp from 'utils/parseTimestamp';
 
 type DepositAtMaturity = {
   deposit: () => void;
@@ -26,7 +27,7 @@ type DepositAtMaturity = {
 
 export default (): DepositAtMaturity => {
   const { t } = useTranslation();
-  const { track } = useAnalytics();
+  const { analyticsEvent } = useAnalytics();
   const { walletAddress } = useWeb3();
 
   const {
@@ -198,11 +199,16 @@ export default (): DepositAtMaturity => {
       const { status, transactionHash } = await depositTx.wait();
       setTx({ status: status ? 'success' : 'error', hash: transactionHash });
 
-      void track(status ? 'depositAtMaturity' : 'depositAtMaturityRevert', {
+      void analyticsEvent(status ? 'depositAtMaturity' : 'depositAtMaturityRevert', {
+        operation: 'depositAtMaturity',
+        status: status ? 'success' : 'error',
         amount: qty,
         asset: marketAccount.assetSymbol,
-        maturity: date,
-        hash: transactionHash,
+        maturity: parseTimestamp(date.toString(), 'MMM DD, YYYY, HH:mm:ss'),
+        tx_hash: transactionHash,
+        wallet_balance: walletBalance,
+        gas_limit: formatFixed(depositTx.gasLimit),
+        ...(depositTx.gasPrice ? { gas_price: formatFixed(depositTx.gasPrice) } : {}),
       });
     } catch (error) {
       if (depositTx) setTx({ status: 'error', hash: depositTx.hash });
@@ -211,18 +217,19 @@ export default (): DepositAtMaturity => {
       setIsLoadingOp(false);
     }
   }, [
-    marketAccount,
-    date,
-    qty,
     ETHRouterContract,
-    marketContract,
-    walletAddress,
-    setIsLoadingOp,
-    slippage,
-    setTx,
-    track,
-    setErrorData,
+    analyticsEvent,
+    date,
     handleOperationError,
+    marketAccount,
+    marketContract,
+    qty,
+    setErrorData,
+    setIsLoadingOp,
+    setTx,
+    slippage,
+    walletAddress,
+    walletBalance,
   ]);
 
   const handleSubmitAction = useCallback(async () => {
@@ -232,14 +239,7 @@ export default (): DepositAtMaturity => {
       setRequiresApproval(await needsApproval(qty));
       return;
     }
-
-    void track('depositAtMaturityRequest', {
-      amount: qty,
-      maturity: date,
-      asset: symbol,
-    });
-    return deposit();
-  }, [approve, date, deposit, isLoading, needsApproval, qty, requiresApproval, setRequiresApproval, symbol, track]);
+  }, [approve, isLoading, needsApproval, qty, requiresApproval, setRequiresApproval]);
 
   const updateAPR = useCallback(async () => {
     if (!marketAccount || !date || !previewerContract || !depositRate) {

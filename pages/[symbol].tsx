@@ -9,7 +9,6 @@ import AssetHeaderInfo from 'components/asset/Header';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Box, IconButton, Tooltip, Typography, Grid } from '@mui/material';
 import Link from 'next/link';
-import useAnalytics from 'hooks/useAnalytics';
 import useRouter from 'hooks/useRouter';
 import { useTranslation } from 'react-i18next';
 import ReactGA from 'react-ga4';
@@ -21,8 +20,6 @@ type Props = {
 const Market: NextPage<Props> = ({ symbol }: Props) => {
   const { t } = useTranslation();
   const { query, pathname } = useRouter();
-  const { page } = useAnalytics();
-  useEffect(() => void page(), [page]);
 
   useEffect(() => {
     void ReactGA.send({

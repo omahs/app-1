@@ -22,7 +22,7 @@ type Borrow = {
 
 export default (): Borrow => {
   const { t } = useTranslation();
-  const { track } = useAnalytics();
+  const { analyticsEvent } = useAnalytics();
   const { walletAddress } = useWeb3();
 
   const {
@@ -232,10 +232,14 @@ export default (): Borrow => {
 
       setTx({ status: status ? 'success' : 'error', hash: transactionHash });
 
-      void track(status ? 'borrow' : 'borrowRevert', {
+      void analyticsEvent(status ? 'borrow' : 'borrow_revert', {
+        operation: 'borrow',
+        status: status ? 'success' : 'error',
         amount: qty,
+        tx_hash: transactionHash,
         asset: marketAccount.assetSymbol,
-        hash: transactionHash,
+        gas_limit: formatFixed(borrowTx.gasLimit),
+        ...(borrowTx.gasPrice ? { gas_price: formatFixed(borrowTx.gasPrice) } : {}),
       });
     } catch (error) {
       if (borrowTx?.hash) setTx({ status: 'error', hash: borrowTx.hash });
@@ -251,7 +255,7 @@ export default (): Borrow => {
     marketAccount,
     setIsLoadingOp,
     setTx,
-    track,
+    analyticsEvent,
     qty,
     ETHRouterContract,
     marketContract,
@@ -268,13 +272,8 @@ export default (): Borrow => {
       return;
     }
 
-    void track('borrowRequest', {
-      amount: qty,
-      asset: symbol,
-    });
-
     return borrow();
-  }, [approve, borrow, isLoading, needsApproval, qty, requiresApproval, setRequiresApproval, symbol, track]);
+  }, [approve, borrow, isLoading, needsApproval, qty, requiresApproval, setRequiresApproval]);
 
   return {
     isLoading,
