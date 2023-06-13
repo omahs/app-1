@@ -1,7 +1,7 @@
 import { EthereumClient, w3mConnectors, w3mProvider } from '@web3modal/ethereum';
 import { createClient, configureChains, ChainProviderFn, Chain } from 'wagmi';
 import { InjectedConnector } from 'wagmi/connectors/injected';
-import { mainnet, goerli, optimism } from 'wagmi/chains';
+import { mainnet, goerli, optimism, arbitrum } from 'wagmi/chains';
 import { jsonRpcProvider } from 'wagmi/providers/jsonRpc';
 import { alchemyProvider } from 'wagmi/providers/alchemy';
 import { publicProvider } from 'wagmi/providers/public';
@@ -20,6 +20,7 @@ export const walletConnectId = '11ddaa8aaede72cb5d6b0dae2fed7baa';
 export const supportedChains = [
   mainnet,
   optimism,
+  arbitrum,
   ...(JSON.parse(process.env.NEXT_PUBLIC_ENABLE_TESTNETS ?? 'false') ? [goerli] : []),
 ];
 

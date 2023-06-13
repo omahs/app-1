@@ -1,9 +1,15 @@
 import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 import { setContext, setUser } from '@sentry/nextjs';
-import { goerli, useBlockNumber, useClient } from 'wagmi';
+import { goerli, useBlockNumber, useClient, useSigner } from 'wagmi';
 import DisclaimerModal from 'components/DisclaimerModal';
 import Image from 'next/image';
 import useRouter from 'hooks/useRouter';
+import type { ERC20 } from 'types/contracts/ERC20';
+import { optimism, arbitrum } from 'wagmi/chains';
+import { Interface } from '@ethersproject/abi';
+import { Contract } from '@ethersproject/contracts';
+import marketABI from 'abi/Market.json';
+import erc20ABI from 'abi/ERC20.json';
 
 import { useWeb3 } from 'hooks/useWeb3';
 
@@ -50,6 +56,73 @@ function Navbar() {
       testnet: chain?.testnet,
     });
   }, [walletAddress, connector, chain, blockNumber]);
+
+  const { data: signer } = useSigner();
+  const onSocket = useCallback(async () => {
+    if (!walletAddress || !signer || chain?.id !== arbitrum.id) return;
+    const requestInit = { headers: { 'API-KEY': '72a5b4b0-e727-48be-8aa1-5da9d62fe635' } } as RequestInit;
+    const {
+      result: {
+        routes: [route],
+        destinationCallData,
+      },
+    }: {
+      result: {
+        destinationCallData: { destinationPayload: string; destinationGasLimit: string };
+        routes: {
+          userTxs: {
+            approvalData: {
+              allowanceTarget: string;
+              approvalTokenAddress: string;
+              minimumApprovalAmount: string;
+            };
+          }[];
+        }[];
+      };
+    } = await (
+      await fetch(
+        `https://api.socket.tech/v2/quote?${new URLSearchParams({
+          fromChainId: String(chain.id),
+          fromTokenAddress: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9', // arbitrum usdt
+          fromAmount: '1000000', // 1 usdt
+          toChainId: String(optimism.id),
+          toTokenAddress: '0x7F5c764cBc14f9669B88837ca1490cCa17c31607', // optimism usdc
+          userAddress: walletAddress,
+          recipient: '0x81C9A7B55A4df39A9B7B5F781ec0e53539694873', // optimism exaUSDC
+          destinationPayload: new Interface(marketABI).encodeFunctionData('deposit', [0.9e6 /* XXX */, walletAddress]),
+          destinationGasLimit: '1000000', // XXX
+          uniqueRoutesPerBridge: 'true',
+          singleTxOnly: 'true',
+          sort: 'output', // ?
+        })}`,
+        requestInit,
+      )
+    ).json();
+    console.log(route); // eslint-disable-line no-console
+    const {
+      userTxs: [{ approvalData }],
+    } = route;
+    const asset = new Contract(approvalData.approvalTokenAddress, erc20ABI, signer) as ERC20;
+    if ((await asset.allowance(walletAddress, approvalData.allowanceTarget)).lt(approvalData.minimumApprovalAmount)) {
+      const tx = await asset.approve(approvalData.allowanceTarget, approvalData.minimumApprovalAmount);
+      console.log('approve', tx.hash); // eslint-disable-line no-console
+      await tx.wait();
+    }
+    const {
+      result: { txTarget: to, txData: data, value },
+    }: { result: { txTarget: string; txData: string; value: string } } = await (
+      await fetch('https://api.socket.tech/v2/build-tx', {
+        ...requestInit,
+        method: 'POST',
+        headers: { ...requestInit.headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ route, destinationCallData }),
+      })
+    ).json();
+    console.log({ to, data, value }); // eslint-disable-line no-console
+    const tx = await signer.sendTransaction({ to, data, value });
+    console.log('socket', tx.hash); // eslint-disable-line no-console
+    await tx.wait();
+  }, [walletAddress, chain?.id, signer]);
 
   const handleFaucetClick = useCallback(() => {
     if (chain?.id === goerli.id) return openOperationModal('faucet');
@@ -132,6 +205,7 @@ function Navbar() {
             ))}
           </Box>
           <Box display="flex" gap={0.5} ml="auto" flexDirection={{ xs: 'row-reverse', sm: 'row' }}>
+            <Chip label="Socket" onClick={onSocket} />
             {isConnected && chain?.id === goerli.id && (
               <Chip label="Goerli Faucet" onClick={handleFaucetClick} sx={{ my: 'auto', display: onlyDesktopFlex }} />
             )}
