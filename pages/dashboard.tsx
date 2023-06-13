@@ -5,6 +5,7 @@ import React, { useEffect } from 'react';
 import Grid from '@mui/material/Grid';
 import DashboardHeader from 'components/dashboard/DashboardHeader';
 import useAnalytics from 'hooks/useAnalytics';
+import Leverager from 'components/Leverager';
 
 const DashboardContent = dynamic(() => import('components/dashboard/DashboardContent'));
 
@@ -15,6 +16,7 @@ const DashBoard: NextPage = () => {
   return (
     <Grid>
       <DashboardHeader />
+      <Leverager />
       <DashboardContent />
     </Grid>
   );

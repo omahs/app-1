@@ -5,6 +5,7 @@ import numbers from 'config/numbers.json';
 import { useMarketContext } from 'contexts/MarketContext';
 import { useDebtManagerContext } from 'contexts/DebtManagerContext';
 import { BigNumber } from '@ethersproject/bignumber';
+import { useLeveragerContext } from 'contexts/LeveragerContext';
 
 const { minAPRValue } = numbers;
 
@@ -65,5 +66,33 @@ export function useStartDebtManagerButton() {
   return {
     startDebtManager,
     isRolloverDisabled,
+  };
+}
+
+export function useStartLeverager() {
+  const { connect, isConnected } = useWeb3();
+  const { openLeverager, debtManager } = useLeveragerContext();
+
+  const startLeverager = useCallback(
+    (...args: Parameters<typeof openLeverager>) => {
+      if (!isConnected) {
+        return connect();
+      }
+
+      if (!debtManager) return;
+
+      openLeverager(...args);
+    },
+    [debtManager, connect, isConnected, openLeverager],
+  );
+
+  const isLeveragerDisabled = useCallback(
+    (borrow?: BigNumber) => !debtManager || (borrow && borrow.isZero()),
+    [debtManager],
+  );
+
+  return {
+    startLeverager,
+    isLeveragerDisabled,
   };
 }

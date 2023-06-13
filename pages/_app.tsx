@@ -21,6 +21,7 @@ import { globals } from 'styles/theme';
 import { MarketsBasicProvider } from 'contexts/MarketsBasicContext';
 import { NetworkContextProvider, useNetworkContext } from 'contexts/NetworkContext';
 import { DebtManagerContextProvider } from 'contexts/DebtManagerContext';
+import { LeveragerContextProvider } from 'contexts/LeveragerContext';
 import { GlobalErrorProvider } from 'contexts/GlobalErrorContext';
 
 const { maxWidth } = globals;
@@ -84,13 +85,15 @@ export default function App({ Component, pageProps }: AppProps) {
                   <ModalStatusProvider>
                     <MarketsBasicProvider>
                       <DebtManagerContextProvider>
-                        <Box display="flex" flexDirection="column" mx={2} height="100%">
-                          <Navbar />
-                          <main style={{ flexGrow: 1, maxWidth, margin: '0 auto', width: '100%' }}>
-                            <Component {...pageProps} />
-                          </main>
-                          <Footer />
-                        </Box>
+                        <LeveragerContextProvider>
+                          <Box display="flex" flexDirection="column" mx={2} height="100%">
+                            <Navbar />
+                            <main style={{ flexGrow: 1, maxWidth, margin: '0 auto', width: '100%' }}>
+                              <Component {...pageProps} />
+                            </main>
+                            <Footer />
+                          </Box>
+                        </LeveragerContextProvider>
                       </DebtManagerContextProvider>
                     </MarketsBasicProvider>
                   </ModalStatusProvider>
