@@ -17,9 +17,10 @@ void Promise.all([
   readABI('node_modules/@exactly/protocol/deployments/goerli/MarketETHRouter.json'),
   readABI('node_modules/@exactly/protocol/deployments/goerli/InterestRateModelDAI.json'),
   readABI('node_modules/@exactly/protocol/deployments/goerli/RewardsController.json'),
-  readABI('node_modules/@exactly/protocol/deployments/goerli/DebtManager.json'),
+  readABI('node_modules/@exactly/protocol/deployments/optimism/DebtManager.json'),
+  readABI('node_modules/@exactly/protocol/deployments/optimism/Forwarder.json'),
   mkdir('abi', { recursive: true }),
-]).then(async ([erc20, auditor, previewer, market, marketETHRouter, irm, rewards, debtManager]) => {
+]).then(async ([erc20, auditor, previewer, market, marketETHRouter, irm, rewards, debtManager, forwarder]) => {
   const allFiles = await Promise.all([
     writeABI('abi/ERC20.json', erc20),
     writeABI('abi/Market.json', market),
@@ -29,6 +30,7 @@ void Promise.all([
     writeABI('abi/InterestRateModel.json', irm),
     writeABI('abi/RewardsController.json', rewards),
     writeABI('abi/DebtManager.json', debtManager),
+    writeABI('abi/Forwarder.json', forwarder),
   ]);
   await runTypeChain({
     cwd: cwd(),
