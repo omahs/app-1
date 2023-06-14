@@ -568,7 +568,7 @@ export const darkTheme = createTheme({
       styleOverrides: {
         tooltip: {
           backgroundColor: '#222',
-          padding: '16px',
+          padding: '8px',
           border: '1px solid #62666A',
           borderRadius: '8px',
           color: '#FFFFFF',
